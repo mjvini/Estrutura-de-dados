@@ -5,12 +5,13 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include <stdlib.h>
 
 //Matrizes
-int *mat1;
-int *mat2;
-int *mat_saida;
+int **mat1, **temp1;
+int **mat2, **temp2;
+int **mat_saida;
 int dim;//Dimensão das matrizes de entrada
 
 //Inicializa as matrizes de entrada(aleatoriamente) e saída
@@ -18,9 +19,9 @@ void inicializarMat(int dim){
     for(int i=0; i<dim;i++){
         for(int j=0; j<dim; j++){
             int num_random = rand() % 100; //Gera um número aleatório entre 0 e 99
-            mat1[i*dim+j] = num_random;
-            mat2[i*dim+j] = (num_random * (i+1)) % 100;
-            mat_saida[i*dim+j] = 0;
+            mat1[i][j] = num_random;
+            mat2[i][j] = (num_random * (i+1)) % 100;
+            mat_saida[i][j] = 0;
         }
     }
 }
@@ -30,7 +31,7 @@ void multMatrizTradicional(int dim){
     for(int i=0; i<dim;i++){
         for(int j=0; j<dim; j++){
             for(int k=0; k<dim; k++){
-                mat_saida[i*dim+j] += mat1[i*dim+k] * mat2[k*dim+j];
+                mat_saida[i][j] += mat1[i][j] * mat2[i][j];
             }
         }
     }
@@ -48,12 +49,37 @@ void printMat(int dim, int* mat){
     printf("\n");
 }
 
+//Função para determinar se um número é potencia de 2 
+int ehPotenciaDeDois(int n){
+    int num = n;
+    if( n == 0){
+        printf("%d Não é potencia de dois \n", num);
+        return 0; //False
+    }
+
+    while (n != 1) {
+        if (n % 2 != 0){
+            printf("%d Não é potencia de dois \n", num);
+            return 0;
+        }
+        n = n / 2;
+    }
+    printf("%d É potencia de dois \n", num);
+    return 1; //True
+}
+
+void completaMatrizes(int dim, int *mat1, int *mat2){
+
+}
+
 //Multiplica as matrizes usando o método de Strassen
 //As matrizes precisam ser potência de 2
 int multMatrizStrassen(int *mat1, int *mat2, int *matS,int dim){
-    if(dim % 2 != 0){
-        printf("Matriz não é potência de 2!");
-        return 0; //Falhou a execução
+    //Checa se a matriz é potência de 2, se não for, completa ela com zeros
+    int dimensao = ehPotenciaDeDois(dim);
+    if(dimensao == 0){
+        
+
     }
 
     int m1, m2, m3, m4, m5, m6, m7;
@@ -86,7 +112,17 @@ int multMatrizStrassen(int *mat1, int *mat2, int *matS,int dim){
     return 1; //Tudo certo
 }
 
-int alocacaoMemoria(){
+//Retorna a potencia de 2 mais próxima 
+int  proximaPotenciaDe2 ( unsigned  int  x ){
+    int  value  =  1 ;
+
+    while  ( value  <=  x){
+        value  =  value  <<  1 ;
+    }
+    return  value ;
+}
+
+int alocacaoMemoria(int dim){
     mat1 = (int *) malloc(sizeof(int) * dim * dim);
     if (mat1 == NULL) {printf("ERRO--malloc\n"); return 2;}
     mat2 = (int *) malloc(sizeof(int) * dim * dim);
@@ -108,9 +144,20 @@ int main(int argc, char* argv[]){
     if(argc == 1){
         printf("Cole aqui a dimensão e as matrizes: \n");
         scanf("%d\n", &dim);
+
         //Alocação de memoria
-        alocacaoMemoria();
-        
+        //alocacaoMemoria();
+        int novoDim;
+        //Verifica se dim é potencia de 2 e se não for transforma em pot de 2
+        int VerdOuFalso = ehPotenciaDeDois(dim);
+        if(VerdOuFalso == 0){
+        novoDim = proximaPotenciaDe2(dim);
+        alocacaoMemoria(novoDim);
+        dim = novoDim;
+        }else{
+            alocacaoMemoria(dim);
+        }
+
         //Ler as matrizes de entrada pelo Scanf
         for(int i=0; i<dim;i++){
             for(int j=0; j<dim; j++){
@@ -156,7 +203,7 @@ int main(int argc, char* argv[]){
         dim = atoi(argv[1]);
 
         //Alocação de memoria
-        alocacaoMemoria();
+        alocacaoMemoria(dim);
         
         //Inicializa as matrizes de entrada com números aleatórios
         inicializarMat(dim);
