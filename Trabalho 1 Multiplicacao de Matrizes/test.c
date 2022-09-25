@@ -18,6 +18,15 @@ void inicializarMat(int dim, int **mat){
     }
 }
 
+//Alocação de memoria de entrada
+int **alocacaoMemoria2(int dim){
+    int **matTemp = (int **) malloc(sizeof(int*) * dim);
+    for(int i = 0; i < dim; i++){
+        matTemp[i] = (int*) malloc(sizeof(int*) * dim);
+    }
+    return matTemp;
+}
+
 //Inicializa as matrizes de entrada(aleatoriamente) e saída com 0
 void inicializarMat2(int dim, int **mat){
     for(int i=0; i<dim;i++){
@@ -97,8 +106,8 @@ int main(){
     int novoDim;
     
 
-    dim = 4;
-    alocacaoMemoria(dim);
+    dim = 3;
+    mat1 = alocacaoMemoria2(dim);
 
     srand(time(NULL));
     inicializarMat(dim, mat1);
