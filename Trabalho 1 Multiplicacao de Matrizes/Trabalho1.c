@@ -14,7 +14,7 @@ int **mat2, **temp2;
 int **mat_saida, **mat_saida_strassen;
 int dim;//Dimensão das matrizes de entrada
 
-//Inicializa as matrizes de entrada(aleatoriamente) e saída
+//Inicializa as matrizes de entrada(aleatoriamente) e saída = 0
 void inicializarMat(int dim){
     for(int i=0; i<dim;i++){
         for(int j=0; j<dim; j++){
@@ -24,6 +24,31 @@ void inicializarMat(int dim){
             mat_saida[i][j] = 0;
         }
     }
+}
+
+//Alocação de memoria de entrada
+int **alocacaoMemoria(int dim){
+    int **matTemp = (int **) malloc(sizeof(int*) * dim);
+    for(int i = 0; i < dim; i++){
+        matTemp[i] = (int*) malloc(sizeof(int*) * dim);
+    }
+    return matTemp;
+}
+
+//Gerar alocação de matrizes
+void gerarAlocacao(int dim){
+    mat1 = alocacaoMemoria(dim);
+    mat2 = alocacaoMemoria(dim);
+    mat_saida = alocacaoMemoria(dim);
+    mat_saida_strassen = alocacaoMemoria(dim);
+}
+
+//Gerar alocação de matrizes temporárias
+void gerarAlocacaoTemp(int dim){
+    temp1 = alocacaoMemoria(dim);
+    temp2 = alocacaoMemoria(dim);
+    mat_saida = alocacaoMemoria(dim);
+    mat_saida_strassen = alocacaoMemoria(dim);
 }
 
 //Multiplica as matrizes da forma tradicional
@@ -48,7 +73,7 @@ void multMatrizTradicionalTemporarias(int dim){
     }
 }
 
-void printMat(int dim, int** mat){
+void printMat(int dim, int **mat){
     //printf("Matriz: \n");
     for(int i=0; i<dim;i++){
         printf("\n");
@@ -88,27 +113,88 @@ void completaMatrizes(int dimAntiga,int **mat, int **temp){
     }
 }
 
+//Adição das matrizes de Strassen
+int **adicao(int **mat1, int **mat2, int dim){
+
+    int **matTemp = alocacaoMemoria(dim);
+    for(int i = 0; i < dim; i++){
+        for(int j = 0; j < dim; j++){
+            matTemp[i][j] = mat1[i][j] + mat2[i][j];
+        }
+    }
+    return matTemp;
+}
+
+//Subtração das matrizes de Strassen
+int **subtracao(int **mat1, int **mat2, int dim){
+    
+    int **matTemp = alocacaoMemoria(dim);
+    for(int i = 0; i < dim; i++){
+        for(int j = 0; j < dim; j++){
+            matTemp[i][j] = mat1[i][j] - mat2[i][j];
+        }
+    }
+    return matTemp;
+}
+
 //Multiplica as matrizes usando o método de Strassen
 //As matrizes precisam ser potência de 2
-int multMatrizStrassen(int **mat1, int **mat2, int **matS){
-    //Checa se a matriz é potência de 2, se não for, completa ela com zeros
+int **multMatrizStrassen(int **mat1, int **mat2, int dim){
+	int **matSaida = alocacaoMemoria(dim);
+	int n = dim/2;
 
-    int m1, m2, m3, m4, m5, m6, m7;
-    
-    m1 = (mat1[0][0] + mat1[1][1])*(mat2[0][0]+mat2[1][1]);
-    m2 = (mat1[1][0]+mat1[1][1])*mat2[0][0];
-    m3 = mat1[0][0]*(mat2[0][1]-mat2[1][1]);
-    m4 = mat1[1][1]*(mat2[1][0]-mat2[0][0]);
-    m5 = (mat1[0][0] + mat1[0][1])*mat2[1][1];
-    m6 = (mat1[1][0] - mat1[0][0])*(mat2[0][0]+mat2[0][1]);
-    m7 = (mat1[0][1] - mat1[1][1])*(mat2[1][0]+mat2[1][1]);
+  	if (dim == 1) {
+    	int **C = alocacaoMemoria(1);
+    	C[0][0] = mat1[0][0] * mat2[0][0];
+    	return C;
+	}
+	else{
+		int **A11 = alocacaoMemoria(n);
+		int **A12 = alocacaoMemoria(n);
+		int **A21 = alocacaoMemoria(n);
+		int **A22 = alocacaoMemoria(n);
+		int **B11 = alocacaoMemoria(n);
+		int **B12 = alocacaoMemoria(n);
+		int **B21 = alocacaoMemoria(n);
+		int **B22 = alocacaoMemoria(n);
 
-    matS[0][0] = m1+m4-m5+m7;
-    matS[0][1] = m3+m5;
-    matS[1][0] = m2+m4;
-    matS[1][1] = m1+m3-m2+m6;
+		for(int i=0; i<n; i++) {
+		    for(int j=0; j<n; j++) {
+		        A11[i][j] = mat1[i][j];
+		        A12[i][j] = mat1[i][n+j];
+		        A21[i][j] = mat1[n+i][j];
+		        A22[i][j] = mat1[n+i][n+j];
+		        B11[i][j] = mat2[i][j];
+		        B12[i][j] = mat2[i][n+j];
+		        B21[i][j] = mat2[n+i][j];
+		        B22[i][j] = mat2[n+i][n+j];
+	   		}
+		}
 
-    return 1; //Tudo certo
+		int **m1 = multMatrizStrassen(A11, subtracao(B12, B22, n), n);
+		int **m2 = multMatrizStrassen(adicao(A11, A12, n), B22, n);
+		int **m3 = multMatrizStrassen(adicao(A21, A22, n), B11, n);
+		int **m4 = multMatrizStrassen(A22, subtracao(B21, B11, n), n);
+		int **m5 = multMatrizStrassen(adicao(A11, A22, n), adicao(B11, B22, n), n);
+		int **m6 = multMatrizStrassen(subtracao(A12, A22, n), adicao(B21, B22, n), n);
+		int **m7 = multMatrizStrassen(subtracao(A11, A21, n), adicao(B11, B12, n), n);
+
+		int **C11 = subtracao(adicao(adicao(m5, m4, n), m6, n), m2, n);
+		int **C12 = adicao(m1, m2, n);
+		int **C21 = adicao(m3, m4, n);
+		int **C22 = subtracao(subtracao(adicao(m5, m1, n), m3, n), m7, n);
+
+		for(int i = 0; i < n; i++) {
+		    for(int j = 0; j < n; j++) {
+		        matSaida[i][j] = C11[i][j];
+		        matSaida[i][j+n] = C12[i][j];
+		        matSaida[n+i][j] = C21[i][j];
+		        matSaida[n+i][n+j] = C22[i][j];
+		    }
+		}
+	
+		return matSaida;
+	}
 }
 
 //Retorna a potencia de 2 mais próxima 
@@ -121,47 +207,6 @@ int  proximaPotenciaDe2 ( unsigned  int  x ){
     return  value ;
 }
 
-//Alocação de memoria de entrada
-int alocacaoMemoria(int dim){
-    mat1 = (int **) malloc(sizeof(int*) * dim);
-    for(int i = 0; i < dim; i++){
-        mat1[i] = (int*) malloc(dim * sizeof(int));
-    }
-    if (mat1 == NULL) {printf("ERRO--malloc\n"); return 2;}
-    mat2 = (int **) malloc(sizeof(int*) * dim);
-    for(int i = 0; i < dim; i++){
-        mat2[i] = (int*) malloc(dim * sizeof(int));
-    }
-    if (mat2 == NULL) {printf("ERRO--malloc\n"); return 2;}
-}
-
-//Alocação de memoria temporaria
-int alocacaoMemoriaTemporaria(int dim){
-    temp1 = (int **) malloc(sizeof(int*) * dim);
-    for(int i = 0; i < dim; i++){
-        temp1[i] = (int*) malloc(dim * sizeof(int));
-    }
-    if (temp1 == NULL) {printf("ERRO--malloc\n"); return 2;}
-    temp2 = (int **) malloc(sizeof(int*) * dim);
-    for(int i = 0; i < dim; i++){
-        temp2[i] = (int*) malloc(dim * sizeof(int));
-    }
-    if (temp2 == NULL) {printf("ERRO--malloc\n"); return 2;}
-}
-
-//Alocação de memoria de saida
-int alocacaoMemoriaSaida(int dim){
-    mat_saida = (int **) malloc(sizeof(int*) * dim);
-    for(int i = 0; i < dim; i++){
-        mat_saida[i] = (int*) malloc(dim * sizeof(int));
-    }
-    if (mat_saida == NULL) {printf("ERRO--malloc\n"); return 2;}
-    mat_saida_strassen = (int **) malloc(sizeof(int*) * dim);
-    for(int i = 0; i < dim; i++){
-        mat_saida_strassen[i] = (int*) malloc(dim * sizeof(int));
-    }
-    if (mat_saida_strassen == NULL) {printf("ERRO--malloc\n"); return 2;}
-}
 
 int main(int argc, char* argv[]){
     
@@ -181,18 +226,18 @@ int main(int argc, char* argv[]){
         //alocacaoMemoria();
         //Variavel para mudar a dimensão das matrizes de entrada caso seja necessário
         int novoDim = 0;
+        printf("aqui");
         //Verifica se dim é potencia de 2 e se não for transforma em pot de 2
         int VerdOuFalso = ehPotenciaDeDois(dim);
+        //printf("aqui");
 
         //Determina se vai alocar memoria de entrada ou temporaria
         if(VerdOuFalso == 0){
             novoDim = proximaPotenciaDe2(dim);
-            alocacaoMemoriaTemporaria(novoDim);
-            alocacaoMemoriaSaida(novoDim);
-            //dim = novoDim;
+            gerarAlocacao(novoDim);
+            dim = novoDim;
         }else{
-            alocacaoMemoria(dim);
-            alocacaoMemoriaSaida(dim);
+            gerarAlocacaoTemp(dim);
         }
 
         //Ler as matrizes de entrada pelo Scanf
@@ -222,7 +267,7 @@ int main(int argc, char* argv[]){
             printf("Matriz de saída: (metodo tradicional)");
             printMat(dim, mat_saida);
             puts("---------------------------");
-            multMatrizStrassen(temp1, temp2, mat_saida_strassen);
+            mat_saida_strassen = multMatrizStrassen(temp1, temp2, novoDim);
             printf("Matriz de saída: (metodo Strassem)");
             printMat(novoDim, mat_saida_strassen);
         }else{
@@ -239,9 +284,9 @@ int main(int argc, char* argv[]){
             printf("Matriz de saída: (metodo tradicional)");
             printMat(dim, mat_saida);
             puts("---------------------------");
-            multMatrizStrassen(mat1, mat2, mat_saida_strassen);
+            //mat_saida_strassen = multMatrizStrassen(mat1, mat2, dim);
             printf("Matriz de saída: (metodo Strassem)");
-            printMat(dim, mat_saida_strassen);
+            //printMat(dim, mat_saida_strassen);
         }
 
         return 1;
@@ -255,7 +300,10 @@ int main(int argc, char* argv[]){
         dim = atoi(argv[1]);
 
         //Alocação de memoria
-        alocacaoMemoria(dim);
+        mat1 = alocacaoMemoria(dim);
+        mat2 = alocacaoMemoria(dim);
+        mat_saida = alocacaoMemoria(dim);
+        mat_saida_strassen = alocacaoMemoria(dim);
         
         //Inicializa as matrizes de entrada com números aleatórios
         srand(time(NULL));
