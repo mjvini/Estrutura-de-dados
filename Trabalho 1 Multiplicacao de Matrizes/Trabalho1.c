@@ -7,24 +7,13 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+#include <time.h>
 
 //Matrizes e matrizes temporárias caso seja preciso
 int **mat1, **temp1;
 int **mat2, **temp2;
 int **mat_saida, **mat_saida_strassen;
 int dim;//Dimensão das matrizes de entrada
-
-//Inicializa as matrizes de entrada(aleatoriamente) e saída = 0
-void inicializarMat(int dim){
-    for(int i=0; i<dim;i++){
-        for(int j=0; j<dim; j++){
-            int num_random = rand() % 100; //Gera um número aleatório entre 0 e 99
-            mat1[i][j] = num_random;
-            mat2[i][j] = (num_random * (i+1)) % 100;
-            mat_saida[i][j] = 0;
-        }
-    }
-}
 
 //Alocação de memoria de entrada
 int **alocacaoMemoria(int dim){
@@ -35,31 +24,62 @@ int **alocacaoMemoria(int dim){
     return matTemp;
 }
 
-//Gerar alocação de matrizes
-void gerarAlocacao(int dim){
-    mat1 = alocacaoMemoria(dim);
-    mat2 = alocacaoMemoria(dim);
-    mat_saida = alocacaoMemoria(dim);
-    mat_saida_strassen = alocacaoMemoria(dim);
+//Inicializa as matrizes de entrada(aleatoriamente) e saída = 0
+int **inicializarMat(int dim){
+    int **mat = alocacaoMemoria(dim);
+    for(int i=0; i<dim;i++){
+        for(int j=0; j<dim; j++){
+            int num_random = rand() % 100; //Gera um número aleatório entre 0 e 99
+            mat[i][j] = num_random;
+            //mat2[i][j] = (num_random * (i+1)) % 100;
+            //mat_saida[i][j] = 0;
+        }
+    }
+    return mat;
 }
 
-//Gerar alocação de matrizes temporárias
+//Inicializa as matrizes de saída = 0
+int **inicializarMatSaida(int dim){
+    int **mat = alocacaoMemoria(dim);
+    for(int i=0; i<dim;i++){
+        for(int j=0; j<dim; j++){
+            mat[i][j] = 0;
+            //mat2[i][j] = (num_random * (i+1)) % 100;
+            //mat_saida[i][j] = 0;
+        }
+    }
+    return mat;
+}
+
+//Gerar alocação de matrizes
+void gerarAlocacaoEntrada(int dim){
+    mat1 = inicializarMat(dim);
+    mat2 = inicializarMat(dim);
+}
+
+//Gerar alocação de matrizes temporárias com 0's
 void gerarAlocacaoTemp(int dim){
-    temp1 = alocacaoMemoria(dim);
-    temp2 = alocacaoMemoria(dim);
-    mat_saida = alocacaoMemoria(dim);
-    mat_saida_strassen = alocacaoMemoria(dim);
+    temp1 = inicializarMatSaida(dim);
+    temp2 = inicializarMatSaida(dim);
+}
+
+//Gera alocação de matrizes de saida
+void gerarAlocacaoSaida(int dim){
+    mat_saida = inicializarMatSaida(dim);
+    mat_saida_strassen = inicializarMatSaida(dim);
 }
 
 //Multiplica as matrizes da forma tradicional
-void multMatrizTradicional(int dim){
+int **multMatrizTradicional(int dim, int **matg, int **math){
+    int **matSa = alocacaoMemoria(dim);
     for(int i=0; i<dim;i++){
         for(int j=0; j<dim; j++){
             for(int k=0; k<dim; k++){
-                mat_saida[i][j] += mat1[i][k] * mat2[k][j];
+                matSa[i][j] += matg[i][k] * math[k][j];
             }
         }
     }
+    return matSa;
 }
 
 //Multiplica as matrizes temporarias da forma tradicional
@@ -88,7 +108,7 @@ void printMat(int dim, int **mat){
 //Função para determinar se um número é potencia de 2
 //Retorna 0 se for falso e 1 se for verdadeiro
 int ehPotenciaDeDois(int n){
-    int num = n;
+    
     if( n == 0){
         //printf("%d Não é potencia de dois \n", num);
         return 0; //False
@@ -210,34 +230,36 @@ int  proximaPotenciaDe2 ( unsigned  int  x ){
 
 int main(int argc, char* argv[]){
     
-    //Leitura dos parametros de entrada
-    /*
-    if(argc<2) {
-      fprintf(stderr,"Digite: %s <dimensao da matriz> \n", argv[0]); //argv[0] trás o nome do programa
-      //return 1;
-    }
-    */
+    //Medir tempo
+    clock_t start, end;
+    double cpu_time_used;
+
+
+    //Inicializa as matrizes de entrada com números aleatórios
+    srand(time(NULL));
+
     //Nenhum argumento foi passado, caso 2
     if(argc == 1){
         printf("Cole aqui a dimensão e as matrizes: \n");
         scanf("%d\n", &dim);
 
-        //Alocação de memoria
-        //alocacaoMemoria();
         //Variavel para mudar a dimensão das matrizes de entrada caso seja necessário
         int novoDim = 0;
-        printf("aqui");
-        //Verifica se dim é potencia de 2 e se não for transforma em pot de 2
-        int VerdOuFalso = ehPotenciaDeDois(dim);
-        //printf("aqui");
 
-        //Determina se vai alocar memoria de entrada ou temporaria
-        if(VerdOuFalso == 0){
+        //Verifica se dim é potencia de 2 e se não for transforma em pot de 2
+        int ehPotDe2 = ehPotenciaDeDois(dim);
+
+        //Caso não seja potencia de 2
+        if(ehPotDe2 == 0){
             novoDim = proximaPotenciaDe2(dim);
-            gerarAlocacao(novoDim);
-            dim = novoDim;
+            gerarAlocacaoEntrada(dim);
+            gerarAlocacaoTemp(novoDim);
+            gerarAlocacaoSaida(novoDim);
+            
+            //dim = novoDim;
         }else{
-            gerarAlocacaoTemp(dim);
+            gerarAlocacaoEntrada(dim);
+            gerarAlocacaoSaida(dim);
         }
 
         //Ler as matrizes de entrada pelo Scanf
@@ -254,25 +276,40 @@ int main(int argc, char* argv[]){
         }
 
         //Caso não seja uma potencia de 2 a dim
-        if(novoDim != 0){
+        if(ehPotDe2 == 0){
             completaMatrizes(dim, mat1, temp1);
             completaMatrizes(dim, mat2, temp2);
+            puts("------------------------");
+            printf("dim: %d\n", novoDim);
             printf("Matriz 1:");
             printMat(novoDim, temp1);
             puts("------------------------");
             printf("Matriz 2:");
             printMat(novoDim, temp2);
             puts("--------------------------");
-            multMatrizTradicionalTemporarias(novoDim);
+            //Medir tempo de multiplicação de matriz tradicional
+            start = clock();
+            mat_saida = multMatrizTradicional(novoDim, temp1, temp2);
+            //Termina de medir tempo de multiplicação de matriz tradicional
+            end = clock();
+            cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+            printf("O tempo da multiplicação da matriz de forma tradicional é: %lf\n", cpu_time_used);
             printf("Matriz de saída: (metodo tradicional)");
-            printMat(dim, mat_saida);
+            printMat(novoDim, mat_saida);
             puts("---------------------------");
+            //Medir tempo de multiplicação de matriz Strassen
+            start = clock();
+            cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
             mat_saida_strassen = multMatrizStrassen(temp1, temp2, novoDim);
+            //Termina de medir tempo de multiplicação de matriz tradicional
+            end = clock();
+            printf("O tempo da multiplicação da matriz de forma Strassen é: %lf\n", cpu_time_used);
             printf("Matriz de saída: (metodo Strassem)");
             printMat(novoDim, mat_saida_strassen);
         }else{
 
             //Prints
+            puts("------------------------");
             printf("dim: %d\n", dim);
             printf("Matriz 1:");
             printMat(dim, mat1);
@@ -280,13 +317,25 @@ int main(int argc, char* argv[]){
             printf("Matriz 2:");
             printMat(dim, mat2);
             puts("--------------------------");
-            multMatrizTradicional(dim);
+            //Medir tempo de multiplicação de matriz tradicional
+            start = clock();
+            mat_saida = multMatrizTradicional(dim, mat1, mat2);
+            //Termina de medir tempo de multiplicação de matriz tradicional
+            end = clock();
+            cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+            printf("O tempo da multiplicação da matriz de forma tradicional é: %lf\n", cpu_time_used);
             printf("Matriz de saída: (metodo tradicional)");
             printMat(dim, mat_saida);
             puts("---------------------------");
-            //mat_saida_strassen = multMatrizStrassen(mat1, mat2, dim);
+            //Medir tempo de multiplicação de matriz Strassen
+            start = clock();
+            mat_saida_strassen = multMatrizStrassen(mat1, mat2, dim);
+            //Termina de medir tempo de multiplicação de matriz tradicional
+            end = clock();
+            cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+            printf("O tempo da multiplicação da matriz de forma Strassen é: %lf\n", cpu_time_used);
             printf("Matriz de saída: (metodo Strassem)");
-            //printMat(dim, mat_saida_strassen);
+            printMat(dim, mat_saida_strassen);
         }
 
         return 1;
@@ -296,18 +345,62 @@ int main(int argc, char* argv[]){
         fprintf(stderr, "Digite: %s <dimensao da matriz>\n", argv[0]); //argv[0] trás o nome do programa
         return 2;
     }
-        //Armazena a dimensão passada pelo argumento
-        dim = atoi(argv[1]);
+    //Inicializa as matrizes de entrada com números aleatórios
+    //srand(time(NULL));
 
-        //Alocação de memoria
-        mat1 = alocacaoMemoria(dim);
-        mat2 = alocacaoMemoria(dim);
-        mat_saida = alocacaoMemoria(dim);
-        mat_saida_strassen = alocacaoMemoria(dim);
+    //Armazena a dimensão passada pelo argumento
+    dim = atoi(argv[1]);
+
+    //Verifica se dim é potencia de 2 e se não for transforma em pot de 2
+    int ehPotDe2 = ehPotenciaDeDois(dim);
+
+    //Variavel para mudar a dimensão das matrizes de entrada caso seja necessário
+    int novoDim = 0;
+
+    //Aloca e inicializa as matrizes de entrada
+    gerarAlocacaoEntrada(dim);
+
+    //Caso não seja uma potencia de 2
+    if(ehPotDe2 == 0){
+        novoDim = proximaPotenciaDe2(dim);
+        gerarAlocacaoTemp(novoDim);
+        gerarAlocacaoSaida(novoDim);
+        completaMatrizes(dim, mat1, temp1);
+        completaMatrizes(dim, mat2, temp2);
         
-        //Inicializa as matrizes de entrada com números aleatórios
-        srand(time(NULL));
-        inicializarMat(dim);
+
+        //Prints
+        printf("dimensão antiga: %d\ndimensão nova: %d\n", dim, novoDim);
+        printf("A dimensão foi ajustada por conta do método de Strassen\n");
+        printf("Matriz 1:");
+        printMat(novoDim, temp1);
+        puts("------------------------");
+        printf("Matriz 2:");
+        printMat(novoDim, temp2);
+
+        puts("--------------------------");
+        //Medir tempo de multiplicação de matriz tradicional
+        start = clock();
+        mat_saida = multMatrizTradicional(novoDim, temp1, temp2);
+        //Termina de medir tempo de multiplicação de matriz tradicional
+        end = clock();
+        cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+        printf("O tempo da multiplicação da matriz de forma tradicional é: %lf\n", cpu_time_used);
+        printf("Matriz de saída (metodo tradicional):");
+        printMat(novoDim, mat_saida);
+        puts("---------------------------");
+        //Medir tempo de multiplicação de matriz Strassen
+        start = clock();
+        mat_saida_strassen = multMatrizStrassen(temp1, temp2, novoDim);
+        //Termina de medir tempo de multiplicação de matriz tradicional
+        end = clock();
+        cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+        printf("O tempo da multiplicação da matriz de forma Strassen é: %lf\n", cpu_time_used);
+        printf("Matriz de saída: (metodo Strassem)");
+        printMat(novoDim, mat_saida_strassen);
+    }else{
+        
+        gerarAlocacaoSaida(dim);
 
         //Prints
         printf("dim: %d\n", dim);
@@ -318,39 +411,35 @@ int main(int argc, char* argv[]){
         printMat(dim, mat2);
 
         puts("--------------------------");
-
-        multMatrizTradicional(dim);
+        //Medir tempo de multiplicação de matriz tradicional
+        start = clock();
+        mat_saida = multMatrizTradicional(dim, mat1, mat2);
+        //Termina de medir tempo de multiplicação de matriz tradicional
+        end = clock();
+        cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+        printf("O tempo da multiplicação da matriz de forma tradicional é: %lf\n", cpu_time_used);
         printf("Matriz de saída (metodo tradicional):");
         printMat(dim, mat_saida);
-
+        puts("---------------------------");
+        //Medir tempo de multiplicação de matriz Strassen
+        start = clock();
+        mat_saida_strassen = multMatrizStrassen(mat1, mat2, dim);
+        //Termina de medir tempo de multiplicação de matriz tradicional
+        end = clock();
+        cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+        printf("O tempo da multiplicação da matriz de forma Strassen é: %lf\n", cpu_time_used);
+        printf("Matriz de saída: (metodo Strassem)");
+        printMat(dim, mat_saida_strassen);
         //return 2;
-    //}
-    /*
-    dim = atoi(argv[1]);
-
-    //Inicialização das matrizes com números aleatórios
-    srand(time(NULL));
-    inicializarMat(dim);
-
-    //Prints
-    printf("dim: %d\n", dim);
-    printf("Matriz 1:");
-    printMat(dim, mat1);
-    puts("------------------------");
-    printf("Matriz 2:");
-    printMat(dim, mat2);
-
-    puts("--------------------------");
-
-    multMatrizTradicional(dim);
-    printf("Matriz de saída:");
-    printMat(dim, mat_saida);
-    */
+    }
 
     //Libera a memoria
     free(mat1);
     free(mat2);
     free(mat_saida);
+    free(mat_saida_strassen);
+    free(temp1);
+    free(temp2);
 
     return 0;
 }
