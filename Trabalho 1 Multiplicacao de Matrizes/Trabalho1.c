@@ -372,13 +372,13 @@ int main(int argc, char* argv[]){
         //Prints
         printf("dimensão antiga: %d\ndimensão nova: %d\n", dim, novoDim);
         printf("A dimensão foi ajustada por conta do método de Strassen\n");
-        printf("Matriz 1:");
-        printMat(novoDim, temp1);
+        //printf("Matriz 1:");
+        //printMat(novoDim, temp1);
         puts("------------------------");
-        printf("Matriz 2:");
-        printMat(novoDim, temp2);
+        //printf("Matriz 2:");
+        //printMat(novoDim, temp2);
 
-        puts("--------------------------");
+        //puts("--------------------------");
         //Medir tempo de multiplicação de matriz tradicional
         start = clock();
         mat_saida = multMatrizTradicional(novoDim, temp1, temp2);
@@ -386,8 +386,8 @@ int main(int argc, char* argv[]){
         end = clock();
         cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
         printf("O tempo da multiplicação da matriz de forma tradicional é: %lf\n", cpu_time_used);
-        printf("Matriz de saída (metodo tradicional):");
-        printMat(novoDim, mat_saida);
+        //printf("Matriz de saída (metodo tradicional):");
+        //printMat(novoDim, mat_saida);
         puts("---------------------------");
         //Medir tempo de multiplicação de matriz Strassen
         start = clock();
@@ -396,21 +396,21 @@ int main(int argc, char* argv[]){
         end = clock();
         cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
         printf("O tempo da multiplicação da matriz de forma Strassen é: %lf\n", cpu_time_used);
-        printf("Matriz de saída: (metodo Strassem)");
-        printMat(novoDim, mat_saida_strassen);
+        //printf("Matriz de saída: (metodo Strassem)");
+        //printMat(novoDim, mat_saida_strassen);
     }else{
         
         gerarAlocacaoSaida(dim);
 
         //Prints
         printf("dim: %d\n", dim);
-        printf("Matriz 1:");
-        printMat(dim, mat1);
+        //printf("Matriz 1:");
+        //printMat(dim, mat1);
         puts("------------------------");
-        printf("Matriz 2:");
-        printMat(dim, mat2);
+        //printf("Matriz 2:");
+        //printMat(dim, mat2);
 
-        puts("--------------------------");
+        //puts("--------------------------");
         //Medir tempo de multiplicação de matriz tradicional
         start = clock();
         mat_saida = multMatrizTradicional(dim, mat1, mat2);
@@ -418,8 +418,8 @@ int main(int argc, char* argv[]){
         end = clock();
         cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
         printf("O tempo da multiplicação da matriz de forma tradicional é: %lf\n", cpu_time_used);
-        printf("Matriz de saída (metodo tradicional):");
-        printMat(dim, mat_saida);
+        //printf("Matriz de saída (metodo tradicional):");
+        //printMat(dim, mat_saida);
         puts("---------------------------");
         //Medir tempo de multiplicação de matriz Strassen
         start = clock();
@@ -428,8 +428,8 @@ int main(int argc, char* argv[]){
         end = clock();
         cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
         printf("O tempo da multiplicação da matriz de forma Strassen é: %lf\n", cpu_time_used);
-        printf("Matriz de saída: (metodo Strassem)");
-        printMat(dim, mat_saida_strassen);
+        //printf("Matriz de saída: (metodo Strassem)");
+        //printMat(dim, mat_saida_strassen);
         //return 2;
     }
 
